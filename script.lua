@@ -19,7 +19,7 @@ label.Position = UDim2.new(0.5, -100, 0.2, -25)
 label.BackgroundTransparency = 1
 label.TextColor3 = Color3.fromRGB(255, 255, 255)
 label.TextScaled = true
-label.Text = "Run fling in infinite yield"
+label.Text = "Penguin auto fling by Penguincre8te"
 label.Parent = screenGui
 
 -- Create Buttons
@@ -50,64 +50,46 @@ local function updateStatusLabel()
 end
 
 -- Function to teleport to players dynamically
-function teleportToPlayers()
-    while teleporting do
-        updateStatusLabel()
-        
-        for _, targetPlayer in ipairs(Players:GetPlayers()) do
-            if targetPlayer ~= localPlayer and targetPlayer.Character and localPlayer.Character then
-                local humanoid = targetPlayer.Character:FindFirstChildOfClass("Humanoid")
+local function teleportToPlayers()
+    spawn(function()
+        while teleporting and wait() do
+            updateStatusLabel()
+            
+            for _, targetPlayer in ipairs(Players:GetPlayers()) do
+                if not teleporting then break end
+                
+                if targetPlayer ~= localPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") and localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                    local humanoid = targetPlayer.Character:FindFirstChildOfClass("Humanoid")
+                    
+                    if humanoid and humanoid.Health > 0 then
+                        local previousPosition = targetPlayer.Character.HumanoidRootPart.Position
+                        local startTime = tick()
 
-                if humanoid then
-                    local previousPosition = targetPlayer.Character.PrimaryPart.Position
-                    local startTime = tick()
+                        while tick() - startTime < 10 and teleporting do
+                            if not targetPlayer.Character or not targetPlayer.Character:FindFirstChild("HumanoidRootPart") then break end
+                            
+                            local currentPosition = targetPlayer.Character.HumanoidRootPart.Position
+                            local speed = (currentPosition - previousPosition).Magnitude / 0.01
 
-                    while tick() - startTime < 10 and teleporting do
-                        local currentPosition = targetPlayer.Character.PrimaryPart.Position
-                        local speed = (currentPosition - previousPosition).Magnitude / 0.01
+                            if speed > 100 then
+                                break
+                            end
 
-                        if speed > 100 then
-                            break
+                            localPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(currentPosition)
+                            previousPosition = currentPosition
+
+                            wait(0.01)
                         end
-
-                        localPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(currentPosition)
-                        previousPosition = currentPosition
-
-                        wait(0.01)
                     end
                 end
             end
         end
-    end
-
-    updateStatusLabel()
-end
-
--- Function to execute fling using Infinite Yield
-local function runFlingCommand()
-    local InfiniteYield = getrenv()._G.InfiniteYield
-    if InfiniteYield then
-        InfiniteYield.ExecuteCommand("fling")
-    end
+        updateStatusLabel()
+    end)
 end
 
 -- Start Infinite Yield fling when script runs
-runFlingCommand()
-
--- Detect local player's death and restart fling
-localPlayer.CharacterAdded:Connect(function(character)
-    local humanoid = character:WaitForChild("Humanoid")
-    
-    humanoid.Died:Connect(function()
-        wait(1) -- Small delay to ensure character reloads
-        runFlingCommand() -- Restart fling upon death
-    end)
-end)
-
--- Ensure UI persists across deaths
-localPlayer.CharacterAdded:Connect(function()
-    updateStatusLabel() -- Update UI after respawn
-end)
+execCmd('fling')
 
 -- Button Functions
 startButton.MouseButton1Click:Connect(function()
@@ -115,11 +97,27 @@ startButton.MouseButton1Click:Connect(function()
         teleporting = true
         updateStatusLabel()
         teleportToPlayers()
+        execCmd('fling')
     end
 end)
 
 pauseButton.MouseButton1Click:Connect(function()
     teleporting = false
+    execCmd('unfling')
     updateStatusLabel()
-    localPlayer.Character:SetPrimaryPartCFrame(CFrame.new(fallbackPosition))
+    if localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        localPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(fallbackPosition)
+    end
+end)
+
+-- Detect local player's death and restart fling
+localPlayer.CharacterAdded:Connect(function(character)
+    local humanoid = character:WaitForChild("Humanoid")
+    
+    humanoid.Died:Connect(function()
+        wait(1) -- Small delay to ensure character reloads
+        if teleporting then
+            execCmd('fling') -- Restart fling upon death
+        end
+    end)
 end)
