@@ -1,12 +1,15 @@
+-- Load Infinite Yield
+loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
+
 local Players = game:GetService("Players")
 local localPlayer = Players.LocalPlayer
 local teleporting = false
-local walkingSpeedThreshold = 16 -- Normal walking speed in Roblox
-local fallbackPosition = Vector3.new(-278.85, 179.70, 343.26) -- Position to teleport when stopping
+local walkingSpeedThreshold = 16
+local fallbackPosition = Vector3.new(-278.85, 179.70, 343.26)
 
 -- Create UI
 local screenGui = Instance.new("ScreenGui")
-screenGui.ResetOnSpawn = false -- Keep UI after player dies
+screenGui.ResetOnSpawn = false
 screenGui.Parent = localPlayer:WaitForChild("PlayerGui")
 
 local startButton = Instance.new("TextButton")
@@ -21,17 +24,15 @@ pauseButton.Position = UDim2.new(0.5, 10, 0.9, -25)
 pauseButton.Text = "Pause"
 pauseButton.Parent = screenGui
 
--- Create Status Label
 local statusLabel = Instance.new("TextLabel")
 statusLabel.Size = UDim2.new(0, 200, 0, 50)
 statusLabel.Position = UDim2.new(0.5, -100, 0.8, -25)
 statusLabel.BackgroundTransparency = 1
-statusLabel.TextColor3 = Color3.fromRGB(255, 255, 255) -- White text
+statusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 statusLabel.TextScaled = true
-statusLabel.Text = "Teleporting: false" -- Initial state
+statusLabel.Text = "Teleporting: false"
 statusLabel.Parent = screenGui
 
--- Function to update status label
 local function updateStatusLabel()
     statusLabel.Text = "Teleporting: " .. tostring(teleporting)
 end
@@ -41,7 +42,7 @@ function teleportToPlayers()
     local index = 1
 
     while teleporting do
-        updateStatusLabel() -- Update label when teleporting starts
+        updateStatusLabel()
 
         if #playerList > 1 then
             local targetPlayer = playerList[index]
@@ -76,20 +77,40 @@ function teleportToPlayers()
         end
     end
 
-    updateStatusLabel() -- Update label when teleporting stops
+    updateStatusLabel()
 end
+
+-- Function to execute fling using Infinite Yield
+local function runFlingCommand()
+    local InfiniteYield = getrenv()._G.InfiniteYield
+    if InfiniteYield then
+        InfiniteYield.ExecuteCommand("fling")
+    end
+end
+
+-- Start Infinite Yield fling when script runs
+runFlingCommand()
+
+-- Detect when player dies and restart fling
+localPlayer.CharacterAdded:Connect(function(character)
+    local humanoid = character:WaitForChild("Humanoid")
+    humanoid.Died:Connect(function()
+        wait(1) -- Small delay to ensure character reloads
+        runFlingCommand() -- Restart fling upon death
+    end)
+end)
 
 -- Button Functions
 startButton.MouseButton1Click:Connect(function()
     if not teleporting then
         teleporting = true
-        updateStatusLabel() -- Refresh label
+        updateStatusLabel()
         teleportToPlayers()
     end
 end)
 
 pauseButton.MouseButton1Click:Connect(function()
     teleporting = false
-    updateStatusLabel() -- Refresh label
+    updateStatusLabel()
     localPlayer.Character:SetPrimaryPartCFrame(CFrame.new(fallbackPosition))
 end)
