@@ -93,6 +93,7 @@ execCmd('fling')
 
 -- Button Functions
 startButton.MouseButton1Click:Connect(function()
+	execCmd('fling')
     if not teleporting then
         teleporting = true
         updateStatusLabel()
