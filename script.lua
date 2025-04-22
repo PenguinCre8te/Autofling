@@ -12,6 +12,16 @@ local screenGui = Instance.new("ScreenGui")
 screenGui.ResetOnSpawn = false
 screenGui.Parent = localPlayer:WaitForChild("PlayerGui")
 
+-- Create a TextLabel
+local label = Instance.new("TextLabel")
+label.Size = UDim2.new(0, 200, 0, 50) -- Width: 200px, Height: 50px
+label.Position = UDim2.new(0.5, -100, 0.2, -25) -- Centered horizontally
+label.BackgroundTransparency = 1 -- Make background invisible
+label.TextColor3 = Color3.fromRGB(255, 255, 255) -- White text
+label.TextScaled = true -- Scale text dynamically
+label.Text = "Run fling in infinite yield" -- Default text
+label.Parent = screenGui
+
 local startButton = Instance.new("TextButton")
 startButton.Size = UDim2.new(0, 100, 0, 50)
 startButton.Position = UDim2.new(0.5, -110, 0.9, -25)
@@ -21,9 +31,10 @@ startButton.Parent = screenGui
 local pauseButton = Instance.new("TextButton")
 pauseButton.Size = UDim2.new(0, 100, 0, 50)
 pauseButton.Position = UDim2.new(0.5, 10, 0.9, -25)
-pauseButton.Text = "Pause"
+pauseButton.Text = "Reset"
 pauseButton.Parent = screenGui
 
+-- Create Status Label
 local statusLabel = Instance.new("TextLabel")
 statusLabel.Size = UDim2.new(0, 200, 0, 50)
 statusLabel.Position = UDim2.new(0.5, -100, 0.8, -25)
@@ -91,13 +102,19 @@ end
 -- Start Infinite Yield fling when script runs
 runFlingCommand()
 
--- Detect when player dies and restart fling
+-- Detect **ONLY the local player's** death and restart fling
 localPlayer.CharacterAdded:Connect(function(character)
     local humanoid = character:WaitForChild("Humanoid")
+    
     humanoid.Died:Connect(function()
         wait(1) -- Small delay to ensure character reloads
         runFlingCommand() -- Restart fling upon death
     end)
+end)
+
+-- Ensure UI persists across deaths
+localPlayer.CharacterAdded:Connect(function()
+    updateStatusLabel() -- Update UI after respawn
 end)
 
 -- Button Functions
