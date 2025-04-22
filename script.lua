@@ -14,14 +14,15 @@ screenGui.Parent = localPlayer:WaitForChild("PlayerGui")
 
 -- Create a TextLabel
 local label = Instance.new("TextLabel")
-label.Size = UDim2.new(0, 200, 0, 50) -- Width: 200px, Height: 50px
-label.Position = UDim2.new(0.5, -100, 0.2, -25) -- Centered horizontally
-label.BackgroundTransparency = 1 -- Make background invisible
-label.TextColor3 = Color3.fromRGB(255, 255, 255) -- White text
-label.TextScaled = true -- Scale text dynamically
-label.Text = "Run fling in infinite yield" -- Default text
+label.Size = UDim2.new(0, 200, 0, 50)
+label.Position = UDim2.new(0.5, -100, 0.2, -25)
+label.BackgroundTransparency = 1
+label.TextColor3 = Color3.fromRGB(255, 255, 255)
+label.TextScaled = true
+label.Text = "Run fling in infinite yield"
 label.Parent = screenGui
 
+-- Create Buttons
 local startButton = Instance.new("TextButton")
 startButton.Size = UDim2.new(0, 100, 0, 50)
 startButton.Position = UDim2.new(0.5, -110, 0.9, -25)
@@ -48,15 +49,12 @@ local function updateStatusLabel()
     statusLabel.Text = "Teleporting: " .. tostring(teleporting)
 end
 
+-- Function to teleport to players dynamically
 function teleportToPlayers()
-    local playerList = Players:GetPlayers()
-    local index = 1
-
     while teleporting do
         updateStatusLabel()
-
-        if #playerList > 1 then
-            local targetPlayer = playerList[index]
+        
+        for _, targetPlayer in ipairs(Players:GetPlayers()) do
             if targetPlayer ~= localPlayer and targetPlayer.Character and localPlayer.Character then
                 local humanoid = targetPlayer.Character:FindFirstChildOfClass("Humanoid")
 
@@ -64,26 +62,20 @@ function teleportToPlayers()
                     local previousPosition = targetPlayer.Character.PrimaryPart.Position
                     local startTime = tick()
 
-                    while tick() - startTime < 3 and teleporting do
+                    while tick() - startTime < 10 and teleporting do
                         local currentPosition = targetPlayer.Character.PrimaryPart.Position
                         local speed = (currentPosition - previousPosition).Magnitude / 0.01
 
-                        if speed > walkingSpeedThreshold then
-                            localPlayer.Character:SetPrimaryPartCFrame(CFrame.new(fallbackPosition))
+                        if speed > 100 then
                             break
                         end
 
-                        localPlayer.Character:SetPrimaryPartCFrame(CFrame.new(currentPosition))
+                        localPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(currentPosition)
                         previousPosition = currentPosition
 
                         wait(0.01)
                     end
                 end
-            end
-            
-            index = index + 1
-            if index > #playerList then
-                index = 1
             end
         end
     end
@@ -102,7 +94,7 @@ end
 -- Start Infinite Yield fling when script runs
 runFlingCommand()
 
--- Detect **ONLY the local player's** death and restart fling
+-- Detect local player's death and restart fling
 localPlayer.CharacterAdded:Connect(function(character)
     local humanoid = character:WaitForChild("Humanoid")
     
